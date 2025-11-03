@@ -58,6 +58,7 @@ async def piv_lobby(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Отправляем сообщение
         await update.message.reply_text(
             message,
+            parse_mode='Markdown',
             disable_web_page_preview=True
         )
 

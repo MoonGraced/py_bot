@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import json
 
+from main import vk_api
+
 load_dotenv()
 
 
@@ -27,6 +29,7 @@ def load_channels_from_json(filename='channels.json'):
         print(f"❌ Ошибка при загрузке: {e}")
         return []
 
+
 class VKAPI:
     def __init__(self):
         self.client_id = os.getenv('VK_CLIENT_ID')
@@ -34,7 +37,8 @@ class VKAPI:
         self.base_url = "https://api.live.vkvideo.ru"
         self.token = None
         self.token_expires = None
-        self.piv_lobby = load_channels_from_json('piv_lobby_streamers.json')
+        self.piv_lobby = {s: vk_api.check_streamer_by_url(s) for s in load_channels_from_json('piv_lobby_streamers.json')}
+        self.timer = datetime.now()
 
     def get_token(self):
         """Получение токена"""
@@ -119,9 +123,10 @@ class VKAPI:
 
     def check_piv_lobby_streamers(self):
         result = ""
-        for piv_streamer in self.piv_lobby:
+        for piv_streamer in self.piv_lobby.keys():
             temp_json = self.check_streamer_by_url(piv_streamer)['data']['channel']
-            result += "Ссылка live.vkvideo.ru/" + temp_json['url'] + " Статус "
+            self.piv_lobby[piv_streamer].update(temp_json['status'])
+            result += f"{piv_streamer}[live.vkvideo.ru/{temp_json['url']} "
             if temp_json['status'] == 'offline':
                 result += f"🔴" + '\n'
             else:
