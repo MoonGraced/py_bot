@@ -131,7 +131,7 @@ class VKAPI:
                 result += f"🟢 "
             else:
                 result += f"🔵 {temp_json['status']}"
-            result += f"[{piv_streamer}](live.vkvideo.ru/{temp_json['url']})\n"
+            result += f"[{temp_json['nick']}](live.vkvideo.ru/{temp_json['url']})\n"
 
 
         return result
