@@ -125,10 +125,13 @@ class VKAPI:
             print(piv_streamer)
             temp_json = self.check_streamer_by_url(piv_streamer)['data']['channel']
             self.piv_lobby[piv_streamer] = temp_json['status']
-            result += f"[{piv_streamer}](live.vkvideo.ru/{temp_json['url']}) "
             if temp_json['status'] == 'offline':
-                result += f"🔴" + '\n'
+                result += f"🔴 "
+            elif temp_json['status'] == 'online':
+                result += f"🟢 "
             else:
-                result += f"🟢" + '\n'
+                result += f"🔵 {temp_json['status']}"
+            result += f"[{piv_streamer}](live.vkvideo.ru/{temp_json['url']})\n"
+
 
         return result
