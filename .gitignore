@@ -1,3 +1,4 @@
 .env
 .venv
 piv_lobby_streamers.json
+__pycache__
