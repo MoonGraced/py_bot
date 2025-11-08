@@ -61,6 +61,7 @@ async def update_data(context: ContextTypes.DEFAULT_TYPE):
         return  # Нет подписчиков - выходим
     try:
         msg = ""
+        print("Update data\n")
         old_data = vk_api.piv_lobby.copy()
         vk_api.check_piv_lobby_streamers()
         new_data = vk_api.piv_lobby.copy()
