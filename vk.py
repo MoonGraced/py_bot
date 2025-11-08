@@ -94,3 +94,4 @@ class VKAPI:
             else:
                 result += f"🔵 {self.piv_lobby[piv_streamer]['status']}"
             result += f"[{self.piv_lobby[piv_streamer]['nick']}](live.vkvideo.ru/{self.piv_lobby[piv_streamer]['url']})\n"
+        return result
