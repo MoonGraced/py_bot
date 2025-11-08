@@ -36,6 +36,7 @@ class VKAPI:
         self.token = None
         self.token_expires = None
         self.piv_lobby = {s: self.check_streamer_by_url(s) for s in load_channels_from_json('piv_lobby_streamers.json')}
+        self.check_piv_lobby_streamers()
         self.timer = datetime.now()
 
     def get_token(self):
@@ -65,46 +66,6 @@ class VKAPI:
 
         return self.token
 
-    def get_promoted_channels(self):
-        """Получение списка каналов"""
-        token = self.get_token()
-
-        response = requests.get(
-            f"https://apidev.live.vkvideo.ru/v1/catalog/promoted_channels",  # или правильный endpoint
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            }
-        )
-
-        response.raise_for_status()
-        return response.json()
-
-    def format_channels_for_telegram(self, channels_data):
-        """Форматирование каналов для Telegram"""
-        if not channels_data.get('data', {}).get('channels'):
-            return "📭 Каналы не найдены"
-
-        message = "🎬 Продвигаемые каналы:\n\n"
-
-        for channel_info in channels_data['data']['channels'][:10]:  # максимум 10 каналов
-            channel = channel_info['channel']
-
-            message += f"🔹 *{channel['nick']}*\n"
-            message += f"   👥 Подписчики: {channel['counters']['subscribers']}\n"
-            message += f"   Статус ({channel['status']})\n"
-
-            # Добавляем ссылку на поток, если есть
-            if channel_info.get('streams'):
-                stream = channel_info['streams'][0]
-                if stream.get('source_urls'):
-                    stream_url = stream['source_urls'][0]['url']
-                    message += f"   📺 [Смотреть поток]({stream_url})\n"
-
-            message += "\n"
-
-        return message
-
     def check_streamer_by_url(self, url):
         token = self.get_token()
 
@@ -120,18 +81,17 @@ class VKAPI:
         return response.json()
 
     def check_piv_lobby_streamers(self):
+        for piv_streamer in self.piv_lobby.keys():
+            self.piv_lobby[piv_streamer] = self.check_streamer_by_url(piv_streamer)['data']['channel']
+
+    def format_piv_lobby_data(self):
         result = ""
         for piv_streamer in self.piv_lobby.keys():
-            print(piv_streamer)
-            temp_json = self.check_streamer_by_url(piv_streamer)['data']['channel']
-            self.piv_lobby[piv_streamer] = temp_json['status']
-            if temp_json['status'] == 'offline':
+            if self.piv_lobby[piv_streamer]['status'] == 'offline':
                 result += f"🔴 "
-            elif temp_json['status'] == 'online':
+            elif self.piv_lobby[piv_streamer]['status'] == 'online':
                 result += f"🟢 "
             else:
-                result += f"🔵 {temp_json['status']}"
-            result += f"[{temp_json['nick']}](live.vkvideo.ru/{temp_json['url']})\n"
-
-
+                result += f"🔵 {self.piv_lobby[piv_streamer]['status']}"
+            result += f"[{self.piv_lobby[piv_streamer]['nick']}](live.vkvideo.ru/{self.piv_lobby[piv_streamer]['url']})\n"
         return result
