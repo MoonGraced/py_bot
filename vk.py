@@ -80,18 +80,16 @@ class VKAPI:
         return response.json()
 
     def check_piv_lobby_streamers(self):
+        for piv_streamer in self.piv_lobby.keys():
+            self.piv_lobby[piv_streamer] = self.check_streamer_by_url(piv_streamer)['data']['channel']
+
+    def format_piv_lobby_data(self):
         result = ""
         for piv_streamer in self.piv_lobby.keys():
-            print(piv_streamer)
-            temp_json = self.check_streamer_by_url(piv_streamer)['data']['channel']
-            self.piv_lobby[piv_streamer] = temp_json['status']
-            if temp_json['status'] == 'offline':
+            if self.piv_lobby[piv_streamer]['status'] == 'offline':
                 result += f"🔴 "
-            elif temp_json['status'] == 'online':
+            elif self.piv_lobby[piv_streamer]['status'] == 'online':
                 result += f"🟢 "
             else:
-                result += f"🔵 {temp_json['status']}"
-            result += f"[{temp_json['nick']}](live.vkvideo.ru/{temp_json['url']})\n"
-
-
-        return result
+                result += f"🔵 {self.piv_lobby[piv_streamer]['status']}"
+            result += f"[{self.piv_lobby[piv_streamer]['nick']}](live.vkvideo.ru/{self.piv_lobby[piv_streamer]['url']})\n"
