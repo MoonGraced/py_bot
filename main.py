@@ -20,30 +20,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/piv_lobby - показать статус стримеров Пивного Лобби\n"
     )
 
-
-async def promoted_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /promoted_channels"""
-    try:
-        # Показываем, что бот печатает
-        await context.bot.send_chat_action(
-            chat_id=update.effective_chat.id,
-            action="typing"
-        )
-
-        # Получаем данные из API
-        channels_data = vk_api.get_promoted_channels()
-        message = vk_api.format_channels_for_telegram(channels_data)
-
-        # Отправляем сообщение
-        await update.message.reply_text(
-            message,
-            parse_mode='Markdown',
-            disable_web_page_preview=True
-        )
-
-    except Exception as e:
-        await update.message.reply_text(f"❌ Ошибка: {str(e)}")
-
 async def piv_lobby(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         # Показываем, что бот печатает
@@ -77,7 +53,6 @@ def main():
 
     # Добавляем обработчики команд
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("promoted_channels", promoted_channels))
     application.add_handler(CommandHandler("piv_lobby", piv_lobby))
 
     # Запускаем бота
