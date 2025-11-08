@@ -42,7 +42,7 @@ async def piv_lobby(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         # Получаем данные из API
-        message = vk_api.check_piv_lobby_streamers()
+        message = vk_api.format_piv_lobby_data()
 
         # Отправляем сообщение
         await update.message.reply_text(
