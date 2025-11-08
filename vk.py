@@ -35,7 +35,7 @@ class VKAPI:
         self.base_url = "https://api.live.vkvideo.ru"
         self.token = None
         self.token_expires = None
-        self.piv_lobby = {s: self.check_streamer_by_url(s) for s in load_channels_from_json('piv_lobby_streamers.json')}
+        self.piv_lobby = {s: self.check_streamer_by_url(s)['data']['channel'] for s in load_channels_from_json('piv_lobby_streamers.json')}
         self.timer = datetime.now()
 
     def get_token(self):
