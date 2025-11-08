@@ -36,8 +36,7 @@ class VKAPI:
         self.token = None
         self.token_expires = None
         self.piv_lobby = {s: self.check_streamer_by_url(s) for s in load_channels_from_json('piv_lobby_streamers.json')}
-        for key, value in self.piv_lobby.items():
-            value = value['data']['channel']
+        self.check_piv_lobby_streamers()
         self.timer = datetime.now()
 
     def get_token(self):
