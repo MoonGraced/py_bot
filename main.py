@@ -77,8 +77,6 @@ async def update_data(context: ContextTypes.DEFAULT_TYPE):
                             parse_mode='Markdown',
                             disable_web_page_preview=True
                         )
-                        # Небольшая задержка между сообщениями
-                        await asyncio.sleep(0.1)
 
                     except Exception as e:
                         print(f"Ошибка отправки в чат {chat_id}: {e}")
@@ -98,10 +96,10 @@ def create_application_with_retry(token, max_retries=5):
             application = (
                 Application.builder()
                 .token(token)
-                .connect_timeout(60)
-                .read_timeout(60)
-                .write_timeout(60)
-                .pool_timeout(60)
+                .connect_timeout(120)
+                .read_timeout(120)
+                .write_timeout(120)
+                .pool_timeout(120)
                 .build()
             )
 
