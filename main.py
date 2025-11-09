@@ -1,10 +1,9 @@
-import asyncio
 import os
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from vk import VKAPI
 from dotenv import load_dotenv
-import json
+
 
 load_dotenv()
 
@@ -12,6 +11,7 @@ load_dotenv()
 vk_api = VKAPI()
 # Список чатов для рассылки (в реальном проекте храните в БД)
 subscribed_chats = set()
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик команды /start"""
@@ -24,6 +24,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/unsubscribe - отписаться от уведомлений"
     )
 
+
 async def unsubscribe(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Отписаться от уведомлений"""
     chat_id = update.effective_chat.id
@@ -32,6 +33,7 @@ async def unsubscribe(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Вы отписались от уведомлений")
     else:
         await update.message.reply_text("ℹ️ Вы не были подписаны")
+
 
 async def piv_lobby(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -54,6 +56,7 @@ async def piv_lobby(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ Ошибка: {str(e)}")
 
+
 # Фоновая задача для обновления данных
 async def update_data(context: ContextTypes.DEFAULT_TYPE):
     """Фоновая задача, которая выполняется периодически"""
@@ -61,14 +64,14 @@ async def update_data(context: ContextTypes.DEFAULT_TYPE):
         return  # Нет подписчиков - выходим
     try:
         old_data = vk_api.piv_lobby.copy()
-        vk_api.check_piv_lobby_streamers()
+        await vk_api.check_piv_lobby_streamers()
         new_data = vk_api.piv_lobby.copy()
-        for k, v in old_data.items():
-            if v['status'] != new_data[k]['status']:
-                if new_data[k]['status'] == 'online':
-                    msg = f"🔥 [{new_data[k]['nick']}](live.vkvideo.ru/{new_data[k]['url']}) начал стрим\n"
+        for url, streamer in old_data.items():
+            if streamer.status != new_data[url].status:
+                if new_data[url].status == 'online':
+                    msg = f"🔥 [{new_data[url].nick}](live.vkvideo.ru/{new_data[url].url}) начал стрим\n"
                 else:
-                    msg = f"🏁 [{new_data[k]['nick']}](live.vkvideo.ru/{new_data[k]['url']}) закончил стрим\n"
+                    msg = f"🏁 [{new_data[url].nick}](live.vkvideo.ru/{new_data[url].url}) закончил стрим\n"
                 for chat_id in list(subscribed_chats):  # Используем list для копирования
                     try:
                         await context.bot.send_message(
@@ -91,29 +94,30 @@ async def update_data(context: ContextTypes.DEFAULT_TYPE):
 def create_application_with_retry(token, max_retries=5):
     """Создание приложения с повторными попытками при сетевых ошибках"""
     for attempt in range(max_retries):
-            print(f"🔄 Попытка подключения {attempt + 1}/{max_retries}...")
+        print(f"🔄 Попытка подключения {attempt + 1}/{max_retries}...")
 
-            application = (
-                Application.builder()
-                .token(token)
-                .connect_timeout(120)
-                .read_timeout(120)
-                .write_timeout(120)
-                .pool_timeout(120)
-                .build()
-            )
+        application = (
+            Application.builder()
+            .token(token)
+            .connect_timeout(120)
+            .read_timeout(120)
+            .write_timeout(120)
+            .pool_timeout(120)
+            .build()
+        )
 
-            # Проверяем подключение
-            print("✅ Приложение создано, проверяем подключение...")
-            return application
+        # Проверяем подключение
+        print("✅ Приложение создано, проверяем подключение...")
+        return application
     raise ConnectionError("Не удалось установить подключение после всех попыток")
 
-async def main():
+
+def main():
     """Асинхронная функция запуска бота"""
     token = os.getenv('BOT_TOKEN')
     if not token:
         raise ValueError("BOT_TOKEN not found in .env file")
-    await vk_api.initialize()
+
     # Создаем приложение с настройками таймаутов
     application = create_application_with_retry(token)
 
@@ -131,6 +135,9 @@ async def main():
     )
 
     # Запускаем бота
+    # print("🤖 Бот запускается...")
+    # await application.initialize()
+    # await application.start()
     print("✅ Бот успешно запущен!")
     application.run_polling(
         drop_pending_updates=True,
@@ -140,4 +147,4 @@ async def main():
 
 if __name__ == '__main__':
     # Запускаем асинхронную функцию
-    asyncio.run(main())
+    main()
