@@ -60,8 +60,6 @@ async def update_data(context: ContextTypes.DEFAULT_TYPE):
     if not subscribed_chats:
         return  # Нет подписчиков - выходим
     try:
-        msg = ""
-        print("Update data\n")
         old_data = vk_api.piv_lobby.copy()
         vk_api.check_piv_lobby_streamers()
         new_data = vk_api.piv_lobby.copy()
@@ -87,7 +85,6 @@ async def update_data(context: ContextTypes.DEFAULT_TYPE):
                         # Удаляем чат если бот заблокирован
                         if "bot was blocked" in str(e).lower():
                             subscribed_chats.discard(chat_id)
-                msg = ""
 
     except Exception as e:
         print(f"Error in background task: {e}")
