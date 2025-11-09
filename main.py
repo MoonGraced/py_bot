@@ -108,12 +108,12 @@ def create_application_with_retry(token, max_retries=5):
             return application
     raise ConnectionError("Не удалось установить подключение после всех попыток")
 
-def main():
+async def main():
     """Асинхронная функция запуска бота"""
     token = os.getenv('BOT_TOKEN')
     if not token:
         raise ValueError("BOT_TOKEN not found in .env file")
-
+    await vk_api.initialize()
     # Создаем приложение с настройками таймаутов
     application = create_application_with_retry(token)
 
@@ -131,9 +131,6 @@ def main():
     )
 
     # Запускаем бота
-    # print("🤖 Бот запускается...")
-    # await application.initialize()
-    # await application.start()
     print("✅ Бот успешно запущен!")
     application.run_polling(
         drop_pending_updates=True,
