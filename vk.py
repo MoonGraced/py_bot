@@ -1,9 +1,13 @@
+import asyncio
 import os
-import requests
+from asyncio import Task
+from typing import Dict
+import httpx
 import base64
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import json
+from models import Streamer
 
 load_dotenv()
 
@@ -35,11 +39,11 @@ class VKAPI:
         self.base_url = "https://api.live.vkvideo.ru"
         self.token = None
         self.token_expires = None
-        self.piv_lobby = {s: self.check_streamer_by_url(s) for s in load_channels_from_json('piv_lobby_streamers.json')}
-        self.check_piv_lobby_streamers()
+        self.urls = load_channels_from_json('piv_lobby_streamers.json')
+        self.piv_lobby: Dict[str, Streamer] = {}
         self.timer = datetime.now()
 
-    def get_token(self):
+    async def get_token(self):
         """Получение токена"""
         if self.token and self.token_expires and datetime.now() < self.token_expires:
             return self.token
@@ -47,14 +51,15 @@ class VKAPI:
         credentials = f"{self.client_id}:{self.client_secret}"
         encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
-        response = requests.post(
-            f"{self.base_url}/oauth/server/token",
-            headers={
-                "Authorization": f"Basic {encoded_credentials}",
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            data={"grant_type": "client_credentials"}
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}/oauth/server/token",
+                headers={
+                    "Authorization": f"Basic {encoded_credentials}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                data={"grant_type": "client_credentials"}
+            )
 
         response.raise_for_status()
         token_data = response.json()
@@ -66,32 +71,38 @@ class VKAPI:
 
         return self.token
 
-    def check_streamer_by_url(self, url):
-        token = self.get_token()
+    async def check_streamer_by_url(self, url) -> Streamer:
+        token = await self.get_token()
 
-        response = requests.get(
-            f"https://apidev.live.vkvideo.ru/v1/channel",  # или правильный endpoint
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            },
-            params={"channel_url": url}
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"https://apidev.live.vkvideo.ru/v1/channel",  # или правильный endpoint
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json"
+                },
+                params={"channel_url": url}
+            )
         response.raise_for_status()
-        return response.json()
+        channel = response.json()['data']['channel']
+        return Streamer(channel["url"], channel["nick"], channel["status"])
 
-    def check_piv_lobby_streamers(self):
-        for piv_streamer in self.piv_lobby.keys():
-            self.piv_lobby[piv_streamer] = self.check_streamer_by_url(piv_streamer)['data']['channel']
+    async def check_piv_lobby_streamers(self):
+        tasks: Dict[str, Task] = {}
+        for piv_streamer in self.urls:
+            tasks[piv_streamer] = asyncio.create_task(self.check_streamer_by_url(piv_streamer))
+
+        for piv_streamer, task in tasks.items():
+            self.piv_lobby[piv_streamer] = await task
 
     def format_piv_lobby_data(self):
         result = ""
         for piv_streamer in self.piv_lobby.keys():
-            if self.piv_lobby[piv_streamer]['status'] == 'offline':
-                result += f"🔴 "
-            elif self.piv_lobby[piv_streamer]['status'] == 'online':
-                result += f"🟢 "
+            if self.piv_lobby[piv_streamer].status == 'offline':
+                status = "🔴"
+            elif self.piv_lobby[piv_streamer].status == 'online':
+                status = "🟢"
             else:
-                result += f"🔵 {self.piv_lobby[piv_streamer]['status']}"
-            result += f"[{self.piv_lobby[piv_streamer]['nick']}](live.vkvideo.ru/{self.piv_lobby[piv_streamer]['url']})\n"
+                status = f"🔵 {self.piv_lobby[piv_streamer].status}"
+            result += f"{status} [{self.piv_lobby[piv_streamer].nick}](live.vkvideo.ru/{self.piv_lobby[piv_streamer].url})\n"
         return result
