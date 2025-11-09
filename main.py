@@ -140,4 +140,4 @@ async def main():
 
 if __name__ == '__main__':
     # Запускаем асинхронную функцию
-    main()
+    asyncio.run(main())
