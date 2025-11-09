@@ -98,10 +98,10 @@ def create_application_with_retry(token, max_retries=5):
             application = (
                 Application.builder()
                 .token(token)
-                .connect_timeout(30)
-                .read_timeout(30)
-                .write_timeout(30)
-                .pool_timeout(30)
+                .connect_timeout(60)
+                .read_timeout(60)
+                .write_timeout(60)
+                .pool_timeout(60)
                 .build()
             )
 
