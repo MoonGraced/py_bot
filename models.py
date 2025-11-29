@@ -6,3 +6,4 @@ class Streamer:
     url: str
     nick: str
     status: str
+    stream_title: str

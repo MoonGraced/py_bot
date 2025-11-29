@@ -45,7 +45,8 @@ async def piv_lobby(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Получаем данные из API
         message = vk_api.format_piv_lobby_data()
-
+        if message == "":
+            message = "🔄 Подождите, идет обновление..."
         # Отправляем сообщение
         await update.message.reply_text(
             message,
@@ -72,6 +73,23 @@ async def update_data(context: ContextTypes.DEFAULT_TYPE):
                     msg = f"🔥 [{new_data[url].nick}](live.vkvideo.ru/{new_data[url].url}) начал стрим\n"
                 else:
                     msg = f"🏁 [{new_data[url].nick}](live.vkvideo.ru/{new_data[url].url}) закончил стрим\n"
+                for chat_id in list(subscribed_chats):  # Используем list для копирования
+                    try:
+                        await context.bot.send_message(
+                            chat_id=chat_id,
+                            text=msg,
+                            parse_mode='Markdown',
+                            disable_web_page_preview=True
+                        )
+
+                    except Exception as e:
+                        print(f"Ошибка отправки в чат {chat_id}: {e}")
+                        # Удаляем чат если бот заблокирован
+                        if "bot was blocked" in str(e).lower():
+                            subscribed_chats.discard(chat_id)
+
+            if streamer.stream_title != new_data[url].stream_title:
+                msg = f"✏️ [{new_data[url].nick}](live.vkvideo.ru/{new_data[url].url}) поменял нахвание стрима\n Новое название: {new_data[url].stream_title}"
                 for chat_id in list(subscribed_chats):  # Используем list для копирования
                     try:
                         await context.bot.send_message(

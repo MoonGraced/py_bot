@@ -85,7 +85,7 @@ class VKAPI:
             )
         response.raise_for_status()
         channel = response.json()['data']['channel']
-        return Streamer(channel["url"], channel["nick"], channel["status"])
+        return Streamer(channel["url"], channel["nick"], channel["status"], response.json()['data']['stream']['title'])
 
     async def check_piv_lobby_streamers(self):
         tasks: Dict[str, Task] = {}
